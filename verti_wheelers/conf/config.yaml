@@ -7,7 +7,7 @@ train_params:
   swa_start: 30 # start epoch of stochastic weight averaging
   patience: 3 # how many epochs we want to wait after the last time the validation loss improved before breaking the training loop
   early_stopping_delta: 0
-  grad_clipping: 1.0 # set to zero to disable grad clipping
+  grad_clipping: 0 # set to zero to disable grad clipping
   early_stopping: False # whether to stop early or not
   start_saving_best: 10 # start epoch of saving best model
 
@@ -21,7 +21,7 @@ logger:
   online: True # (boolean) whether to store logs online or not
   experiment_key: "" # can be retrieved from logger dashboard, available if only resuming
   offline_directory: "./logs" # where to store log data
-  disabled: False # disable the comet ml
+  disabled: True # disable the comet ml
 
 # Dataloader parameters
 dataloader:

@@ -35,6 +35,10 @@ class VWDataset(Dataset):
         img = torchvision.io.read_image(
             self.data['img_address'].iloc[idx]).float()
         img = self.transform(img)
+        # rescale image between 0 and 1
+        img = (img - img.min()) / (img.max() - img.min())
+        # print(f'{img.min() = }')
+        # print(f'{img.max() = }')
         return img, action
 
 
