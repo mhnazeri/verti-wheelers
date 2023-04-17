@@ -39,7 +39,7 @@ To run the training pipeline, make sure everything in the [config file](verti_wh
 To deploy the trained model, please follow the instructions [here](https://github.com/RobotiXX/Verti-Wheelers).
 
 ## Reference
-If you find this repo to be useful in your research, please consider citing our work:
+If you find this repo to be helpful, please consider citing our work:
 ```
 @article{datar2023a,
   title={Toward Wheeled Mobility on Vertically Challenging Terrain: Platforms, Datasets, and Algorithms},
