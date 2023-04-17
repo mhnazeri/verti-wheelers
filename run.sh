@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-export PROJECT_NAME=project_name  # add your project folder to python path
+export PROJECT_NAME=verti_wheelers  # add your project folder to python path
 export PYTHONPATH=$PYTHONPATH:$PROJECT_NAME
 export COMET_LOGGING_CONSOLE=info
 
@@ -12,7 +12,7 @@ Help()
    echo 
    echo "options:"
    echo "train                      Starts training."
-   echo "eval                       Starts evaluation."
+   echo "parse                      Parse bag files."
    echo "run file_name              Runs file_name.py file."
    echo
 }
@@ -22,8 +22,8 @@ run () {
     train)
       python $PROJECT_NAME/main.py --conf $PROJECT_NAME/conf/config
       ;;
-    eval)
-      python $PROJECT_NAME/main.py --conf $PROJECT_NAME/conf/val_config
+    parse)
+      python $PROJECT_NAME/utils/parser.py --conf $PROJECT_NAME/conf/parser_config
       ;;
     run)
       python $2

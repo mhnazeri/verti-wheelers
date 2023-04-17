@@ -1,0 +1,8 @@
+# Parser config
+save_dir: "verti_wheelers/data"
+bags_dir: "verti_wheelers/data/bags"
+topics: # topic names for each sensor
+  depth: 'depth/image_raw/compressed'
+  rpm: 'rpmVal_data'
+  optiflow: 'optiFlow_data'
+  cmd_vel: 'cmd_vel1'
