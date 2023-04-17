@@ -8,7 +8,8 @@ import argparse
 try:
     sys.path.append(str(Path(".").resolve()))
 except:
-    raise RuntimeError("Can't append root directory of the project to the path")
+    raise RuntimeError(
+        "Can't append root directory of the project to the path")
 
 import comet_ml
 import numpy as np
@@ -18,11 +19,12 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.optim.swa_utils import AveragedModel, SWALR
 
-from model.net import CustomModel
-from model.data_loader import CustomDataset
+from model.net import VWBehaviorCloning
+from model.data_loader import VWDataset
 from utils.nn import check_grad_norm, init_weights, EarlyStopping, op_counter
 from utils.io import save_checkpoint, load_checkpoint
 from utils.helpers import get_conf, timeit
+from utils.vision import draw_on_image
 
 
 class Learner:
@@ -38,7 +40,7 @@ class Learner:
         # initialize the optimizer
         self.optimizer, self.lr_scheduler = self.init_optimizer()
         # define loss function
-        self.criterion = torch.nn.CrossEntropyLoss()
+        self.criterion = torch.nn.MSELoss()
         # if resuming, load the checkpoint
         self.if_resume()
 
@@ -87,7 +89,8 @@ class Learner:
             # update SWA model parameters
             if self.epoch > self.cfg.train_params.swa_start:
                 if print_swa_start:
-                    print(f"Epoch {self.epoch:03}, step {self.iteration:05}, starting SWA!")
+                    print(
+                        f"Epoch {self.epoch:03}, step {self.iteration:05}, starting SWA!")
                     # print only once
                     print_swa_start = False
 
@@ -124,7 +127,8 @@ class Learner:
             self.early_stopping(val_loss, self.model)
 
             if self.early_stopping.early_stop and self.cfg.train_params.early_stopping:
-                print(f"{datetime.now():%Y-%m-%d %H:%M:%S} - Epoch {self.epoch:03}, Early stopping")
+                print(
+                    f"{datetime.now():%Y-%m-%d %H:%M:%S} - Epoch {self.epoch:03}, Early stopping")
                 self.save()
                 break
 
@@ -149,9 +153,10 @@ class Learner:
                 self.swa_model(x)
 
             self.save(
-                name=self.cfg.directory.model_name + "-final" + str(self.epoch) + "-swa"
+                name=self.cfg.directory.model_name +
+                "-final" + str(self.epoch) + "-swa"
             )
-        _, x, _ = next(iter(self.data))
+        x, _ = next(iter(self.data))
         macs, params = op_counter(self.model, sample=x.to(device=self.device))
         print("macs = ", macs, " | params = ", params)
         self.logger.log_metrics({"GFLOPS": macs[:-1], "#Params": params[:-1]})
@@ -162,13 +167,13 @@ class Learner:
         """Forward pass of a batch"""
         self.model.train()
         # move data to device
-        uuid, x, y = data
-        x = x.to(device=self.device)
-        y = y.to(device=self.device)
+        img, action = data
+        img = img.to(device=self.device)
+        action = action.to(device=self.device)
 
         # forward, backward
-        out = self.model(x)
-        loss = self.criterion(out, y)
+        out = self.model(img)
+        loss = self.criterion(out, action)
         self.optimizer.zero_grad()
         loss.backward()
         # gradient clipping
@@ -190,25 +195,29 @@ class Learner:
         self.model.eval()
 
         running_loss = []
-        bar = tqdm(self.val_data, desc=f"Epoch {self.epoch:03}/{self.cfg.train_params.epochs:03}, validating")
-        for uid, x, y in bar:
+        bar = tqdm(
+            self.val_data, desc=f"Epoch {self.epoch:03}/{self.cfg.train_params.epochs:03}, validating")
+        for img, action in bar:
             # move data to device
-            x = x.to(device=self.device)
-            y = y.to(device=self.device)
+            img = img.to(device=self.device)
+            action = action.to(device=self.device)
 
             # forward
             if self.epoch > self.cfg.train_params.swa_start:
-                out = self.swa_model(x)
+                out = self.swa_model(img)
             else:
-                out = self.model(x)
+                out = self.model(img)
 
-            loss = self.criterion(out, y)
+            loss = self.criterion(out, action)
             running_loss.append(loss.item())
             bar.set_postfix(loss=loss.item())
 
         bar.close()
+        img_annotated = img[0].cpu().clone()
+        img_annotated = draw_on_image(img_annotated, action[0], out[0], True)
 
-        self.logger.log_image(x[0].squeeze(), f"{out[0].argmax().item()}-|{uid[0]}", step=self.iteration)
+        self.logger.log_image(img_annotated.squeeze(),
+                              f"{out[0].argmax().item()}", step=self.iteration)
 
         # average loss
         loss = np.mean(running_loss)
@@ -218,7 +227,7 @@ class Learner:
     def init_model(self):
         """Initializes the model"""
         print(f"{datetime.now():%Y-%m-%d %H:%M:%S} - INITIALIZING the model!")
-        model = CustomModel(self.cfg.model)
+        model = VWBehaviorCloning(**self.cfg.model)
 
         if 'cuda' in str(self.device) and self.cfg.train_params.device.split(":")[1] == 'a':
             model = torch.nn.DataParallel(model)
@@ -234,14 +243,15 @@ class Learner:
             optimizer = optim.Adam(self.model.parameters(), **self.cfg.adam)
 
         elif self.cfg.train_params.optimizer.lower() == "rmsprop":
-            optimizer = optim.RMSprop(self.model.parameters(), **self.cfg.rmsprop)
+            optimizer = optim.RMSprop(
+                self.model.parameters(), **self.cfg.rmsprop)
 
         elif self.cfg.train_params.optimizer.lower() == "sgd":
             optimizer = optim.SGD(self.model.parameters(), **self.cfg.sgd)
 
         else:
-            raise ValueError(f"Unknown optimizer {self.cfg.train_params.optimizer}" + 
-                "; valid optimizers are 'adam' and 'rmsprop'.")
+            raise ValueError(f"Unknown optimizer {self.cfg.train_params.optimizer}" +
+                             "; valid optimizers are 'adam' and 'rmsprop'.")
 
         # initialize the learning rate scheduler
         lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
@@ -263,11 +273,13 @@ class Learner:
             if is_cuda_available:
                 device_idx = device.split(":")[1]
                 if device_idx == 'a':
-                    print(f"Performing all the operations on CUDA; {torch.cuda.device_count()} devices.")
+                    print(
+                        f"Performing all the operations on CUDA; {torch.cuda.device_count()} devices.")
                     self.cfg.dataloader.batch_size *= torch.cuda.device_count()
                     return torch.device(device.split(":")[0])
                 else:
-                    print(f"Performing all the operations on CUDA device {device_idx}.")
+                    print(
+                        f"Performing all the operations on CUDA device {device_idx}.")
                     return torch.device(device)
             else:
                 print("CUDA device is not available, falling back to CPU!")
@@ -277,12 +289,14 @@ class Learner:
 
     def init_dataloader(self):
         """Initializes the dataloaders"""
-        print(f"{datetime.now():%Y-%m-%d %H:%M:%S} - INITIALIZING the train and val dataloaders!")
-        dataset = CustomDataset(**self.cfg.dataset)
+        print(
+            f"{datetime.now():%Y-%m-%d %H:%M:%S} - INITIALIZING the train and val dataloaders!")
+        dataset = VWDataset(**self.cfg.dataset)
         data = DataLoader(dataset, **self.cfg.dataloader)
         # creating dataset interface and dataloader for val data
         self.cfg.val_dataset.update(self.cfg.dataset)
-        val_dataset = CustomDataset(**self.cfg.val_dataset)
+        self.cfg.val_dataset.update({'train': False})
+        val_dataset = VWDataset(**self.cfg.val_dataset)
 
         self.cfg.dataloader.update({'shuffle': False})  # for val dataloader
         val_data = DataLoader(val_dataset, **self.cfg.dataloader)
@@ -291,9 +305,8 @@ class Learner:
         self.logger.log_parameters(
             {"train_len": len(dataset), "val_len": len(val_dataset)}
         )
-        print(f"Training consists of {len(dataset)} samples, and validation consists of {len(val_dataset)} samples.")
-        self.logger.log_asset_data(json.dumps(dict(val_dataset.cache_names)), 'val-data-uuid.json')
-        self.logger.log_asset_data(json.dumps(dict(dataset.cache_names)), 'train-data-uuid.json')
+        print(
+            f"Training consists of {len(dataset)} samples, and validation consists of {len(val_dataset)} samples.")
 
         return data, val_data
 
@@ -411,10 +424,9 @@ class Learner:
             "e_loss": self.e_loss,
         }
 
-        
-
         if name is None and self.epoch >= self.cfg.train_params.swa_start:
-            save_name = self.cfg.directory.model_name + str(self.epoch) + "-swa"
+            save_name = self.cfg.directory.model_name + \
+                str(self.epoch) + "-swa"
             checkpoint["model-swa"] = self.swa_model.state_dict()
 
         elif name is None:
@@ -426,9 +438,11 @@ class Learner:
         if self.e_loss[-1] < self.best:
             self.best = self.e_loss[-1]
             checkpoint["best"] = self.best
-            save_checkpoint(checkpoint, True, self.cfg.directory.save, save_name)
+            save_checkpoint(checkpoint, True,
+                            self.cfg.directory.save, save_name)
         else:
-            save_checkpoint(checkpoint, False, self.cfg.directory.save, save_name)
+            save_checkpoint(checkpoint, False,
+                            self.cfg.directory.save, save_name)
 
 
 if __name__ == "__main__":

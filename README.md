@@ -1,13 +1,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Inspired by [Stanford CS230 blog post](https://cs230.stanford.edu/blog/pytorch/), I created this repository to use as a template for my ML projects. `util.py` will be updated with helper functions through time.
+This repository contains PyTorch training code for [Verti-Wheelers](https://cs.gmu.edu/~xiao/Research/Verti-Wheelers/).
 
+## Installation
 Main libraries:
 * [PyTorch](pytorch.org/): as the main ML framework
 * [Comet.ml](https://www.comet.ml): tracking code, logging experiments
 * [OmegaConf](https://omegaconf.readthedocs.io/en/latest/): for managing configuration files
 
-## Installation
+
 First create a virtual env for the project. 
 ```bash
 python3 -m venv .venv
@@ -19,11 +20,31 @@ Then install the latest version of PyTorch from the [official site](pytorch.org/
 pip install -r requirements
 ```
 To set up Comet.Ml follow the [official documentations](https://www.comet.ml/docs/).
-## What's new
-* (July 3, 2021) Added `run.sh` bash file to easily run different parts of the code.
-* (July 3, 2021) Added UUID generation for sample names.
-* (July 3, 2021) Added MNIST as an example (not SOTA).
+
+## Dataset
+To download the dataset please follow the instructions [here](https://cs.gmu.edu/~xiao/Research/Verti-Wheelers/).
 
 ## Run
-To run different parts, just edit [run.sh](./run.sh) file and run it using `.` calling.
+To run parser, first edit the config file in [`conf/parser_config`](verti_wheelers/conf/parser_config.yaml) directory. Then run:
+```bash
+./run.sh parse
+```
 
+To run the training pipeline, make sure everything in the [config file](verti_wheelers/conf/config.yaml) is correct, then run:
+```bash
+./run.sh train
+```
+
+## Deployment
+To deploy the trained model, please follow the instructions [here](https://github.com/RobotiXX/Verti-Wheelers).
+
+## Reference
+If you find this repo to be useful in your research, please consider citing our work:
+```
+@article{datar2023a,
+  title={Toward Wheeled Mobility on Vertically Challenging Terrain: Platforms, Datasets, and Algorithms},
+  author={Datar, Aniket and Pan, Chenhui and Nazeri, Mohammad and Xiao, Xuesu},
+  journal={arXiv preprint arXiv:2303.00998},
+  year={2023}
+}
+```

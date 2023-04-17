@@ -1,6 +1,6 @@
 # Training parameters
 train_params:
-  epochs: 20
+  epochs: 60
   device: "cpu" # device name, values: "cpu" or "cuda:x" where 'x' is gpu index, or "cuda:a" to use all GPUs
   optimizer: "adam"
   save_every: 10
@@ -13,15 +13,15 @@ train_params:
 
 # Logger parameters
 logger:
-  workspace: "Public" # workspace name
-  project_name: "MNIST-test" # project name
-  experiment_name: experiment_34" # name of the experiment
-  tags: "exp test train"
+  workspace: "VertiWheelers" # workspace name
+  project_name: "IROS2023" # project name
+  experiment_name: "train" # name of the experiment
+  tags: "resnet train"
   resume: False # (boolean) whether to resume training or not
   online: True # (boolean) whether to store logs online or not
   experiment_key: "" # can be retrieved from logger dashboard, available if only resuming
   offline_directory: "./logs" # where to store log data
-  disabled: True # disable the comet ml
+  disabled: False # disable the comet ml
 
 # Dataloader parameters
 dataloader:
@@ -32,25 +32,26 @@ dataloader:
 
 # Train dataset parameters
 dataset:
-  root: "project_name/data" # where data resides
+  root: "verti_wheelers/data" # where data resides
   train: True # train data
-  download: True # whether to download data or not
-  read_only: 10 # only read this number of samples (useful for testing the pipeline)
 
 # Validation dataset parameters/ only change parameters that are different from train data
 val_dataset:
   train: False # val data
 
+model:
+  dims: [512, 256, 128, 64, 2] # controller dimensions
+  act: 'relu' # activation function for controller [relu, tanh, sigmoid]
+  l_act: False # squeeze output?
+  bn: False  # batchnorm for controller 
+  dropout: 0.0 # droput for controller 
+
 # directories
 directory:
-  model_name: "model-name" # file name for saved model
-  save: "project_name/checkpoint"
-  load: "project_name/checkpoint/model-name-best.pt"
+  model_name: "resnet18" # file name for saved model
+  save: "verti_wheelers/checkpoint"
+  load: "verti_wheelers/checkpoint/resnet18-best.pt"
 
-# model parameters
-model:
-  in_features: 1
-  out_features: 10
 
 # model initializer
 init_model:
@@ -65,7 +66,7 @@ init_model:
 
 # Adam parameters if using Adam optimizer
 adam:
-  lr: 1e-3
+  lr: 1e-5
   betas:
     - 0.9
     - 0.999
