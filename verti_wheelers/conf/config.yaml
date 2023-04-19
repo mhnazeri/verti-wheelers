@@ -21,7 +21,7 @@ logger:
   online: True # (boolean) whether to store logs online or not
   experiment_key: "" # can be retrieved from logger dashboard, available if only resuming
   offline_directory: "./logs" # where to store log data
-  disabled: True # disable the comet ml
+  disabled: False # disable the comet ml
 
 # Dataloader parameters
 dataloader:

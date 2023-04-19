@@ -232,7 +232,7 @@ class Learner:
         if 'cuda' in str(self.device) and self.cfg.train_params.device.split(":")[1] == 'a':
             model = torch.nn.DataParallel(model)
 
-        model.apply(init_weights(**self.cfg.init_model))
+        # model.apply(init_weights(**self.cfg.init_model))
         model = model.to(device=self.device)
         return model
 
