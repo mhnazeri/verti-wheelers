@@ -42,4 +42,4 @@ run () {
 
 run $1 $2
 
-echo "Done."
+# echo "Done."

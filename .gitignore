@@ -1,4 +1,7 @@
 *.db
 *.pt
 *.gz
+*.bag
+*.jpeg
+*.pickle
 data/

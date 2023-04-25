@@ -51,7 +51,7 @@ def draw_on_image(img, true_actions, action, gt=True):
     draw = ImageDraw.Draw(img)
     # load font
     fnt_path = Path("./verti_wheelers/").resolve() / 'misc_files/FUTURAM.ttf'
-    print(f"{fnt_path = }")
+
     fnt = ImageFont.truetype(str(fnt_path), 8)
     draw.text((5, 30), f"Linear: {linear:.2f}", fill='red', font=fnt)
     draw.text((5, 50), f"Angular: {linear:.2f}", fill='red', font=fnt)

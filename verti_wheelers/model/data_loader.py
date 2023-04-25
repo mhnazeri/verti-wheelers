@@ -1,6 +1,6 @@
 import os.path as osp
 
-import pandas as pd
+import pickle
 from typing import Callable, Optional
 import torch
 from torchvision import transforms
@@ -17,23 +17,25 @@ class VWDataset(Dataset):
             self.transform = transforms.Compose(
                 [transforms.Resize(224, antialias=False)])
 
-        self.data = pd.read_csv(root + "/labels.csv")
+        self.data = None
+        with open(f"{root}/labels.pickle", "rb") as f:
+            self.data = pickle.load(f)
+
         if train:
             mode = 'train'
-            self.data = self.data.iloc[: int(self.data.shape[0] * 0.95)]
+            self.data["cmd_vel"] = self.data["cmd_vel"][: int(len(self.data["cmd_vel"]) * 0.95)]
         else:
             mode = 'val'
-            self.data = self.data.iloc[int(self.data.shape[0] * 0.95) + 1:]
+            self.data["cmd_vel"] = self.data["cmd_vel"][int(len(self.data["cmd_vel"]) * 0.95) + 1:]
 
     def __len__(self):
-        return self.data.shape[0]
+        return len(self.data["cmd_vel"])
 
     def __getitem__(self, idx):
-        """Return a sample in the form: (uuid, image, label)"""
-        action = torch.tensor(eval(self.data['cmd_vel'].iloc[idx])[
-                              :2], dtype=torch.float)  # only the first two numbers are relevant
+        """Return a sample in the form: (image, label)"""
+        action = torch.tensor(self.data['cmd_vel'][idx], dtype=torch.float)
         img = torchvision.io.read_image(
-            self.data['img_address'].iloc[idx]).float()
+            self.data['img_address'][idx]).float()
         img = self.transform(img)
         # rescale image between 0 and 1
         img = (img - img.min()) / (img.max() - img.min())

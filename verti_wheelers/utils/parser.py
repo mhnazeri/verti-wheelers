@@ -2,7 +2,7 @@
 Parses bag files. Courtesy of Weisen Zhao for implementing the parser.
 """
 from pathlib import Path
-import csv
+import pickle
 import argparse
 
 import rosbag
@@ -21,11 +21,11 @@ def parse_bags(cfg) -> None:
     bag_files = [x for x in bag_files.iterdir() if x.suffix == ".bag"]
     save_depth = save_dir / "depth"
     Path.mkdir(save_depth, exist_ok=True)
-    save_labels = str(save_dir / "labels.csv")
-    field_names = ["id", "rpm", "opti_flow", "cmd_vel", "img_address"]
-    csvfile = open(save_labels, "w", newline="\n")
-    writer = csv.DictWriter(csvfile, fieldnames=field_names)
-    writer.writeheader()
+    save_labels = str(save_dir / "labels.pickle")
+    field_names = {"rpm": [], "opti_flow": [], "cmd_vel": [], "img_address": []}
+    # csvfile = open(save_labels, "w", newline="\n")
+    # writer = csv.DictWriter(csvfile, fieldnames=field_names)
+    # writer.writeheader()
     for bag in tqdm(bag_files, desc="Bags processed"):
         bag = rosbag.Bag(bag)
         depthMsg = bag.read_messages(topics=cfg.topics.depth)
@@ -68,16 +68,22 @@ def parse_bags(cfg) -> None:
             img = img.astype(float)
             save_path = str((save_depth / f"{id}.jpeg").resolve())
             cv2.imwrite(save_path, img)
-            writer.writerow(
-                {
-                    "id": id,
-                    "rpm": rpmToAdd,
-                    "opti_flow": groundSpeedToAdd,
-                    "cmd_vel": lableToAdd,
-                    "img_address": save_path,
-                }
-            )
-    csvfile.close()
+            # writer.writerow(
+            #     {
+            #         "id": id,
+            #         "rpm": rpmToAdd,
+            #         "opti_flow": groundSpeedToAdd,
+            #         "cmd_vel": lableToAdd,
+            #         "img_address": save_path,
+            #     }
+            # )
+            field_names['rpm'].append(rpmToAdd)
+            field_names['opti_flow'].append(groundSpeedToAdd)
+            field_names['cmd_vel'].append(lableToAdd[:2])
+            field_names['img_address'].append(save_path)
+    # csvfile.close()
+    with open(save_labels, "wb") as f:
+        pickle.dump(field_names, f)
 
 
 if __name__ == "__main__":

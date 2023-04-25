@@ -1,6 +1,6 @@
 # Training parameters
 train_params:
-  epochs: 60
+  epochs: 2
   device: "cpu" # device name, values: "cpu" or "cuda:x" where 'x' is gpu index, or "cuda:a" to use all GPUs
   optimizer: "adam"
   save_every: 10
@@ -21,7 +21,7 @@ logger:
   online: True # (boolean) whether to store logs online or not
   experiment_key: "" # can be retrieved from logger dashboard, available if only resuming
   offline_directory: "./logs" # where to store log data
-  disabled: False # disable the comet ml
+  disabled: True # disable the comet ml
 
 # Dataloader parameters
 dataloader:
